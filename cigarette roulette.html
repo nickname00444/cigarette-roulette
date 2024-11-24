@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>담배 룰렛</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 32px;
+            margin: 0;
+        }
+
+        header p {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+
+        #tar-levels {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .tar-checkbox {
+            margin-right: 15px;
+        }
+
+        .tar-checkbox input {
+            margin-right: 5px;
+        }
+
+        #roulette-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 5px solid #333;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #roulette {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            transform-origin: center center;
+            transition: transform 3s ease-out;
+            transform: rotate(0deg);
+        }
+
+        .roulette-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            clip-path: polygon(100% 0, 0 0, 100% 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transform-origin: 100% 100%;
+            transition: transform 0.5s ease-out;
+        }
+
+        .arrow {
+            position: absolute;
+            top: 10px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid #ff0000;
+            transform: translateX(-50%);
+            left: 50%;
+        }
+
+        #start-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>담배 룰렛</h1>
+        <p>made by. HYS</p>
+    </header>
+
+    <div id="tar-levels">
+        <div class="tar-checkbox">
+            <input type="checkbox" id="tar-0-0-5" /> 0~0.5mg
+        </div>
+        <div class="tar-checkbox">
+            <input type="checkbox" id="tar-1-4" /> 1~4mg
+        </div>
+        <div class="tar-checkbox">
+            <input type="checkbox" id="tar-5-8" /> 5~8mg
+        </div>
+        <div class="tar-checkbox">
+            <input type="checkbox" id="tar-9-plus" /> 9mg 이상
+        </div>
+    </div>
+
+    <div id="roulette-container">
+        <div id="roulette">
+            <!-- 룰렛 칸들이 여기에 채워질 예정 -->
+        </div>
+        <div class="arrow"></div>
+    </div>
+
+    <button id="start-btn">룰렛 시작!</button>
+
+    <div id="result"></div>
+
+    <script>
+        // JavaScript 코드는 동일합니다
+        const cigarettes = {
+            "0~0.5mg": [
+                "레종 이오니아 아일랜드 핑크", "레종 이오니아 아쿠아 그린"
+            ],
+            "1~4mg": [
+                "메비우스 시트로 웨이브", "메비우스 LSS 3미리",
+                "에쎄 체인지 W", "에쎄 체인지 업", "에쎄 체인지 빙", "에쎄 체인지 프로즌",
+                "에쎄 히말라야", "에쎄 이츠 딥브라운", "레종 프렌치 블랙", "레종 프렌치 요고", "레종 프렌치 아이스 블랑", "레종 프렌치 썸",
+                "레종 휘바 아이스 툰드라", "말보로 비스타", "보헴 시가 카리브"
+            ],
+            "5~8mg": [
+                "에쎄 클래식", "에쎄 아이스", "레종 아이스 프레쏘", "레종 썬 프레쏘", "말보로 레드", "말보로 미디엄", "말보로 골드", "말보로 아이스 블라스트",
+                "보헴 쿠바나 더블", "디스 아프리카 룰라", "디스 아프리카 몰라", "던힐 6mg"
+            ],
+            "9mg 이상": [
+                "블랙데빌 블랙", "블랙데빌 그레이"
+            ]
+        };
+
+        const excludeCigarettes = ["아이코스 전용 스틱"];
+
+        const startBtn = document.getElementById('start-btn');
+        const roulette = document.getElementById('roulette');
+        const resultDiv = document.getElementById('result');
+        const arrow = document.querySelector('.arrow');
+
+        startBtn.addEventListener('click', startRoulette);
+
+        function startRoulette() {
+            const selectedLevels = getSelectedTarLevels();
+            if (selectedLevels.length === 0) {
+                alert('타르 함량을 선택해 주세요!');
+                return;
+            }
+
+            const selectedCigarettes = selectedLevels.flatMap(level =>
+                cigarettes[level].filter(cigarette => !excludeCigarettes.includes(cigarette))
+            );
+
+            if (selectedCigarettes.length === 0) {
+                alert('선택된 타르 함량에 해당하는 담배가 없습니다.');
+                return;
+            }
+
+            const rouletteSegments = createRouletteSegments(selectedCigarettes);
+            roulette.innerHTML = rouletteSegments;
+
+            roulette.style.transition = 'transform 3s ease-out';
+            roulette.style.transform = `rotate(${Math.random() * 1000 + 360}deg)`;
+
+            setTimeout(() => {
+                const winnerIndex = Math.floor(Math.random() * selectedCigarettes.length);
+                const winner = selectedCigarettes[winnerIndex];
+                resultDiv.textContent = `당첨된 담배: ${winner}`;
+                roulette.style.transition = 'none';
+                roulette.style.transform = `rotate(${360 * Math.floor(Math.random() * 10)}deg)`;
+            }, 3000);
+        }
+
+        function getSelectedTarLevels() {
+            const selectedLevels = [];
+            if (document.getElementById('tar-0-0-5').checked) selectedLevels.push("0~0.5mg");
+            if (document.getElementById('tar-1-4').checked) selectedLevels.push("1~4mg");
+            if (document.getElementById('tar-5-8').checked) selectedLevels.push("5~8mg");
+            if (document.getElementById('tar-9-plus').checked) selectedLevels.push("9mg 이상");
+            return selectedLevels;
+        }
+
+        function createRouletteSegments(cigarettes) {
+            const colors = ['#ff6347', '#4682b4', '#32cd32', '#ffa500', '#8a2be2', '#ff69b4', '#f0e68c', '#e9967a', '#dda0dd'];
+            const segments = [];
+            const segmentCount = cigarettes.length;
+            const segmentAngle = 360 / segmentCount;
+
+            for (let i = 0; i < segmentCount; i++) {
+                const segmentColor = colors[i % colors.length];
+                const rotation = segmentAngle * i;
+                segments.push(`
+                    <div class="roulette-segment" style="background-color: ${segmentColor}; transform: rotate(${rotation}deg);">
+                        ${cigarettes[i]}
+                    </div>
+                `);
+            }
+            return segments.join('');
+        }
+    </script>
+</body>
+</html>
